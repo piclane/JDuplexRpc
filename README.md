@@ -21,7 +21,7 @@ public static void main(String[] args) throws Exception {
 ```java
 public static void main(String[] args) throws Exception {
 	Process proc = new ProcessBuilder()
-		.command("ssh", "pi@192.168.1.123", "java -jar ~/hoge_server.jar")
+		.command("ssh", "-q", "pi@192.168.1.123", "java -jar ~/hoge_server.jar")
 		.redirectOutput(Redirect.PIPE)
 		.redirectInput(Redirect.PIPE)
 		.redirectError(Redirect.INHERIT)
