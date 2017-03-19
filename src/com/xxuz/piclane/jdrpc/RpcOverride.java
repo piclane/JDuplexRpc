@@ -1,6 +1,7 @@
 package com.xxuz.piclane.jdrpc;
 
 import java.io.Serializable;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 /**
@@ -84,7 +85,7 @@ public class RpcOverride implements Serializable {
 		super();
 		
 		Class<?> declaringClass = method.getDeclaringClass();
-		if(!declaringClass.isInterface()) {
+		if((method.getModifiers() & Modifier.STATIC) == 0 && !declaringClass.isInterface()) {
 			throw new IllegalArgumentException("インターフェイスのメソッドのみオーバーライド可能です");
 		}
 		if(parameterIndex < 0) {

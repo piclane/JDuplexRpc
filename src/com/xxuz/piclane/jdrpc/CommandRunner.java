@@ -6,6 +6,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.HashSet;
 import java.util.Set;
@@ -186,6 +187,10 @@ public class CommandRunner implements AutoCloseable {
 		removeInstance(instanceId);
 	}
 	
+	public Object invokeStatic(Method method, Object... args) throws InvocationTargetException, InterruptedException {
+		return invoke((UUID)null, method, args);
+	}
+	
 	public Object invoke(String name, Method method, Object... args) throws InvocationTargetException, InterruptedException {
 		InstanceContainer named = getInstanceContainer(name);
 		if(named == null) {
@@ -196,6 +201,10 @@ public class CommandRunner implements AutoCloseable {
 	}
 
 	public Object invoke(UUID instanceId, Method method, Object... args) throws InvocationTargetException, InterruptedException {
+		if(instanceId == null && (method.getModifiers() & Modifier.STATIC) == 0) {
+			throw new IllegalArgumentException(method + " is not static method");
+		}
+		
 		// 引数のリファレンス化
 		int paramCount = method.getParameterCount();
 		Class<?>[] paramClasses = method.getParameterTypes();
@@ -446,10 +455,6 @@ public class CommandRunner implements AutoCloseable {
 	protected CommandResponse.Invoke processInvoke(CommandRequest.Invoke req) {
 		UUID messageId = req.getMessageId();
 		UUID instanceId = req.getInstanceId();
-		Object object = tryGet(instanceId);
-		if(object == null) {
-			return new CommandResponse.Invoke(messageId, ObjectType.InternalError, new NullPointerException());
-		}
 		
 		try {
 			Object[] args = req.getArguments();
@@ -463,6 +468,15 @@ public class CommandRunner implements AutoCloseable {
 				if(arg instanceof Reference) {
 					Reference ref = (Reference)arg;
 					args[i] = tryGet(ref.getInstanceId());
+				}
+			}
+			
+			// インスタンス取得
+			Object object = null;
+			if((method.getModifiers() & Modifier.STATIC) == 0) {
+				object = tryGet(instanceId);
+				if(object == null) {
+					throw new NullPointerException();
 				}
 			}
 
