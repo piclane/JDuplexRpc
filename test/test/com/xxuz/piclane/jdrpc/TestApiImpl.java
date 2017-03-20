@@ -1,6 +1,7 @@
 package test.com.xxuz.piclane.jdrpc;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.function.Supplier;
 
 /**
@@ -66,5 +67,16 @@ public class TestApiImpl implements TestApi {
 	@Override
 	public Supplier<Integer> test7_Sum(int a, int b) {
 		return () -> a + b;
+	}
+	
+	/**
+	 * @see test.com.xxuz.piclane.jdrpc.TestApi#test8_RefCall(byte[], int[], long[], java.lang.Object[])
+	 */
+	@Override
+	public void test8_RefCall(byte[] a, int[] b, long[] c, Object[] d) {
+		Arrays.fill(a, (byte)1);
+		Arrays.fill(b, 1);
+		Arrays.fill(c, 1L);
+		Arrays.fill(d, Long.valueOf(1));
 	}
 }

@@ -27,4 +27,5 @@ public interface TestApi {
 	
 	public Supplier<Integer> test7_Sum(int a, int b);
 	
+	public void test8_RefCall(@RpcParam byte[] a, @RpcParam int[] b, @RpcParam long[] c, @RpcParam Object[] d);
 }

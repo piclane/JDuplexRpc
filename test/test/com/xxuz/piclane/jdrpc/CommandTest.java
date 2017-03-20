@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -138,6 +139,34 @@ public class CommandTest {
 	
 	@Test
 	public void test8() throws Exception {
+		TestApi api = runner2.get("api");
+		
+		byte[] a = new byte[10];
+		int[] b = new int[10];
+		long[] c = new long[10];
+		Object[] d = new Object[10];
+		api.test8_RefCall(a, b, c, d);
+		
+		byte[] a_expected = new byte[10];
+		Arrays.fill(a_expected, (byte)1);
+		assertArrayEquals(a_expected, a);
+		
+		int[] b_expected = new int[10];
+		Arrays.fill(b_expected, 1);
+		assertArrayEquals(b_expected, b);
+		
+		long[] c_expected = new long[10];
+		Arrays.fill(c_expected, 1L);
+		assertArrayEquals(c_expected, c);
+		
+		
+		Object[] d_expected = new Object[10];
+		Arrays.fill(d_expected, Long.valueOf(1));
+		assertArrayEquals(d_expected, d);
+	}
+	
+	@Test
+	public void testEnd() throws Exception {
 		runner2.close();
 		
 		assertTrue(runner1.isClosed());

@@ -75,17 +75,33 @@ public abstract class CommandResponse implements Command {
 		/** 返値、もしくは実行中に発生した例外 */
 		private final Object returnValue;
 		
+		/** 参照渡しされた引数 */
+		private final ReferenceArray[] referenceParams;
+		
 		/**
 		 * コンストラクタ
 		 * 
 		 * @param messageId メッセージID
-		 * @param exceptionOccurred 例外が発生した場合 true そうでない場合 false
-		 * @param returnValue 返値
+		 * @param objectType {@link #returnValue} の内容
+		 * @param returnValue 返値、もしくは実行中に発生した例外
 		 */
 		public Invoke(UUID messageId, ObjectType objectType, Object returnValue) {
+			this(messageId, objectType, returnValue, null);
+		}
+		
+		/**
+		 * コンストラクタ
+		 * 
+		 * @param messageId メッセージID
+		 * @param objectType {@link #returnValue} の内容
+		 * @param returnValue 返値、もしくは実行中に発生した例外
+		 * @param referenceParams 参照渡しされた引数
+		 */
+		public Invoke(UUID messageId, ObjectType objectType, Object returnValue, ReferenceArray[] referenceParams) {
 			super(messageId);
 			this.objectType = objectType;
 			this.returnValue = returnValue;
+			this.referenceParams = referenceParams;
 		}
 		
 		/**
@@ -107,6 +123,15 @@ public abstract class CommandResponse implements Command {
 			}
 		}
 		
+		/**
+		 * referenceParams を取得します
+		 *
+		 * @return referenceParams
+		 */
+		public ReferenceArray[] getReferenceParams() {
+			return referenceParams != null ? referenceParams : ReferenceArray.EMPTY_ARRAY;
+		}
+
 		/**
 		 * {@link Invoke#returnValue} の内容
 		 */

@@ -207,18 +207,22 @@ public class CommandRunner implements AutoCloseable {
 		
 		// 引数のリファレンス化
 		int paramCount = method.getParameterCount();
+		Object[] reqArgs = new Object[paramCount];
 		Class<?>[] paramClasses = method.getParameterTypes();
 		Annotation[][] paramAnnos = method.getParameterAnnotations();
 		for(int i=0; i<paramCount; i++) {
-			Object arg = args[i];
+			Object arg = reqArgs[i] = args[i];
 			Class<?> paramCls = paramClasses[i];
-			if(hasAnnotation(paramAnnos[i], RpcParam.class) || 
+			if(arg != null &&
+			   hasAnnotation(paramAnnos[i], RpcParam.class) || 
 			   overrides.contains(RpcOverride.forMethodParameter(i, method))) {
-				if(!paramCls.isInterface()) {
-					throw new IllegalArgumentException();
-				}
-				if(arg != null) {
-					args[i] = new Reference(register(null, arg, paramCls));
+				if(paramCls.isArray()) {
+					reqArgs[i] = new ReferenceArray(i, arg);
+				} else {
+					if(!paramCls.isInterface()) {
+						throw new IllegalArgumentException();
+					}
+					reqArgs[i] = new Reference(register(null, arg, paramCls));
 				}
 			}
 		}
@@ -229,10 +233,15 @@ public class CommandRunner implements AutoCloseable {
 			method.getDeclaringClass(),
 			method.getName(),
 			method.getParameterTypes(),
-			args);
+			reqArgs);
 		CommandResponse.Invoke resp = 
 			(CommandResponse.Invoke)stream.call(req);
 		Object result = resp.getReturnValue();
+		
+		// 参照渡しされた引数を戻す
+		for(ReferenceArray refParam: resp.getReferenceParams()) {
+			refParam.copyInto(args[refParam.getParameterIndex()]);
+		}
 		
 		// 返値のリファレンス解除
 		if(result instanceof Reference) {
@@ -463,11 +472,19 @@ public class CommandRunner implements AutoCloseable {
 			
 			// 引数のリファレンス解除
 			int paramCount = method.getParameterCount();
+			int refParamCount = 0;
+			Object[] reqArgs = new Object[paramCount];
 			for(int i=0; i<paramCount; i++) {
 				Object arg = args[i];
 				if(arg instanceof Reference) {
 					Reference ref = (Reference)arg;
-					args[i] = tryGet(ref.getInstanceId());
+					reqArgs[i] = tryGet(ref.getInstanceId());
+				} else if(arg instanceof ReferenceArray) {
+					ReferenceArray ref = (ReferenceArray)arg;
+					reqArgs[i] = ref.getArray();
+					refParamCount++;
+				} else {
+					reqArgs[i] = arg;
 				}
 			}
 			
@@ -481,7 +498,17 @@ public class CommandRunner implements AutoCloseable {
 			}
 
 			// 実行
-			Object result = method.invoke(object, args);
+			Object result = method.invoke(object, reqArgs);
+			
+			// 参照渡し引数のリファレンス化
+			ReferenceArray[] refParams = new ReferenceArray[refParamCount];
+			for(int i=0, ri=0; i<paramCount; i++) {
+				Object arg = args[i];
+				if(arg instanceof ReferenceArray) {
+					ReferenceArray ref = (ReferenceArray)arg;
+					refParams[ri++] = new ReferenceArray(ref.getParameterIndex(), reqArgs[i]);
+				}
+			}
 			
 			// 返値のリファレンス化
 			if(result != null &&
@@ -490,7 +517,7 @@ public class CommandRunner implements AutoCloseable {
 				result = new Reference(register(null, result, method.getReturnType()));
 			}
 			
-			return new CommandResponse.Invoke(messageId, ObjectType.Result, result);
+			return new CommandResponse.Invoke(messageId, ObjectType.Result, result, refParams);
 		} catch (InvocationTargetException e) {
 			return new CommandResponse.Invoke(messageId, ObjectType.InvocationException, e.getTargetException());
 		} catch (Exception e) {
