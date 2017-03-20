@@ -1,6 +1,7 @@
 package com.xxuz.piclane.jdrpc;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
@@ -164,5 +165,22 @@ public class RpcOverride implements Serializable {
 		if (!Arrays.equals(parameterTypes, other.parameterTypes))
 			return false;
 		return true;
+	}
+	
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		Method method = getMethod();
+		int parameterIndex = getParameterIndex();
+		StringBuilder buf = new StringBuilder();
+		if(parameterIndex >= 0) {
+			buf.append("parameterIndex=");
+			buf.append(parameterIndex);
+			buf.append(" ");
+		}
+		buf.append(method);
+		return buf.toString();
 	}
 }
