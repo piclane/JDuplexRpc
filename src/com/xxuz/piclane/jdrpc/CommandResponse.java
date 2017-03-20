@@ -69,7 +69,7 @@ public abstract class CommandResponse implements Command {
 		/** serialVersionUID */
 		private static final long serialVersionUID = -4478492364586325237L;
 
-		/** 実行中に例外が発生したかどうか */
+		/** {@link #returnValue} の内容 */
 		private final ObjectType objectType;
 		
 		/** 返値、もしくは実行中に発生した例外 */
