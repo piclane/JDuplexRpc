@@ -280,7 +280,7 @@ public class CommandRunner implements AutoCloseable {
 		es.awaitTermination(10L, TimeUnit.SECONDS);
 	}
 	
-	public void closeWithoutCall() throws InterruptedException {
+	private void closeWithoutCall() throws InterruptedException {
 		if(isClosed) {
 			return;
 		}
