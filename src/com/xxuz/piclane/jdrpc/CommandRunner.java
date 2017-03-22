@@ -98,6 +98,7 @@ public class CommandRunner implements AutoCloseable {
 	 * @throws InterruptedException 割込例外が発生した場合
 	 */
 	public <T> T get(String name) throws InterruptedException {
+		validate();
 		InstanceContainer named = getInstanceContainer(name);
 		return named.getInstance();
 	}
@@ -111,6 +112,7 @@ public class CommandRunner implements AutoCloseable {
 	 * @throws InterruptedException 割込例外が発生した場合
 	 */
 	public <T> T get(UUID instanceId) throws InterruptedException {
+		validate();
 		InstanceContainer named = getInstanceContainer(instanceId);
 		return named.getInstance();
 	}
@@ -123,6 +125,7 @@ public class CommandRunner implements AutoCloseable {
 	 * @return 登録されている場合はインスタンス、登録されていない場合は <code>null</code>
 	 */
 	public <T> T tryGet(String name) {
+		validate();
 		InstanceContainer named = tryGetInstanceContainer(name);
 		if(named != null) {
 			return named.getInstance();
@@ -139,6 +142,7 @@ public class CommandRunner implements AutoCloseable {
 	 * @return 登録されている場合はインスタンス、登録されていない場合は <code>null</code>
 	 */
 	public <T> T tryGet(UUID instanceId) {
+		validate();
 		InstanceContainer named = instances.get(instanceId);
 		if(named != null) {
 			return named.getInstance();
@@ -169,6 +173,7 @@ public class CommandRunner implements AutoCloseable {
 	 * @throws InterruptedException 割込例外が発生した場合
 	 */
 	public UUID register(String name, Object object, Class<?>... interfaces) throws InterruptedException {
+		validate();
 		UUID instanceId = UUID.randomUUID();
 		name = putInstance(name, instanceId, interfaces, object);
 		stream.call(new CommandRequest.Register(name, instanceId, interfaces));
@@ -182,6 +187,7 @@ public class CommandRunner implements AutoCloseable {
 	 * @throws InterruptedException 割込例外が発生した場合
 	 */
 	public void deregister(String name) throws InterruptedException {
+		validate();
 		removeInstance(name);
 	}
 	
@@ -192,6 +198,7 @@ public class CommandRunner implements AutoCloseable {
 	 * @throws InterruptedException 割込例外が発生した場合
 	 */
 	public void deregister(UUID instanceId) throws InterruptedException {
+		validate();
 		removeInstance(instanceId);
 	}
 	
@@ -209,6 +216,7 @@ public class CommandRunner implements AutoCloseable {
 	}
 
 	public Object invoke(UUID instanceId, Method method, Object... args) throws InvocationTargetException, InterruptedException {
+		validate();
 		if(instanceId == null && (method.getModifiers() & Modifier.STATIC) == 0) {
 			throw new IllegalArgumentException(method + " is not static method");
 		}
@@ -296,6 +304,12 @@ public class CommandRunner implements AutoCloseable {
 		
 		es.shutdownNow();
 		es.awaitTermination(10L, TimeUnit.SECONDS);
+	}
+	
+	private void validate() {
+		if(isClosed) {
+			throw new IllegalStateException("CommandRunner has been closed.");
+		}
 	}
 	
 	/**
