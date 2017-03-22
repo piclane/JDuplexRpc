@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="build_jar" default="main">
+	<target name="main">
+		<antcall target="build">
+			<param name="jarPath" value="./build/jdrpc-1.0.0.jar"/>
+		</antcall>
+	</target>
+	
+	<target name="prepare">
+		<!-- ビルドディレクトリを空にする -->
+		<delete>
+			<fileset dir="./build/">
+				<include name="*.jar" />
+			</fileset>
+		</delete>
+		
+		<!-- ビルドディレクトリを作成 -->
+		<tempfile property="buildDir" destDir="${java.io.tmpdir}" prefix="build" />
+		<mkdir dir="${buildDir}" />
+	</target>
+	
+	<target name="build" depends="prepare">
+		<!-- 各プロジェクトからリソースをコピー -->
+		<copy todir="${buildDir}">
+			<fileset dir=".">
+				<exclude name="classes/**/*" />
+				<exclude name="bin/**/*" />
+			</fileset>
+		</copy>
+		
+		<!-- ビルド -->
+		<javac
+			srcdir="${buildDir}/src"
+			destdir="${buildDir}"
+			debug="true"
+			debuglevel="source,lines,vars"
+			includeantruntime="false"
+			source="1.8"
+			target="1.8"
+			compiler="javac1.7">
+		</javac>
+		<copy todir="${buildDir}">
+			<fileset dir="${buildDir}/src">
+				<exclude name="**/*.java"/>
+			</fileset>
+		</copy>
+		
+		<!-- 余計なものを削除 -->
+		<delete dir="${buildDir}/src" />
+		<delete dir="${buildDir}/bin" />
+		<delete dir="${buildDir}/test" />
+		<delete dir="${buildDir}/libsrc" />
+		<delete dir="${buildDir}/build" />
+		<delete dir="${buildDir}/.settings" />
+		<delete>
+			<fileset file="${buildDir}/build.xml" />
+			<fileset dir="${buildDir}">
+				<include name=".*" />
+			</fileset>
+		</delete>
+
+		<!-- JARを作成 -->
+		<delete file="${jarPath}"/>
+		<jar destfile="${jarPath}" basedir="${buildDir}" index="true">
+			<manifest>
+			</manifest>
+		</jar>
+
+		<!-- ビルドディレクトリを削除 -->
+		<delete dir="${buildDir}" />
+	</target>
+
+</project>
