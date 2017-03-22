@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -65,7 +66,14 @@ public class DefaultCommandStream implements CommandStream {
 	 * @throws IOException 入出力例外が発生した場合
 	 */
 	public DefaultCommandStream(String name, InputStream is, OutputStream os) throws IOException {
-		this.es = Executors.newCachedThreadPool();
+		this.es = Executors.newCachedThreadPool(new ThreadFactory() {
+			@Override
+			public Thread newThread(Runnable r) {
+				Thread t = new Thread(r);
+				t.setDaemon(true);
+				return t;
+			}
+		});
 		this.name = name != null && !name.isEmpty() ? name + "-" : "";
 		this.is = is;
 		this.os = os;

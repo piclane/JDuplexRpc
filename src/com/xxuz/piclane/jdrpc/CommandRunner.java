@@ -15,6 +15,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import com.xxuz.piclane.jdrpc.CommandResponse.Invoke.ObjectType;
@@ -69,7 +70,14 @@ public class CommandRunner implements AutoCloseable {
 	 * @param stream {@link CommandStream}
 	 */
 	public CommandRunner(String name, CommandStream stream) {
-		this.es = Executors.newCachedThreadPool();
+		this.es = Executors.newCachedThreadPool(new ThreadFactory() {
+			@Override
+			public Thread newThread(Runnable r) {
+				Thread t = new Thread(r);
+				t.setDaemon(true);
+				return t;
+			}
+		});
 		this.name = name != null && !name.isEmpty() ? name + "-" : "";
 		this.instances = new ConcurrentHashMap<>();
 		this.namedInstances = new ConcurrentHashMap<>();
