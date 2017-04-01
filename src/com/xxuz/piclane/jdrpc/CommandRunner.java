@@ -681,7 +681,18 @@ public class CommandRunner implements AutoCloseable {
 						// リモートでメソッド実行
 						return CommandRunner.this.invoke(instanceId, method, args);
 					} catch (InvocationTargetException e) {
-						throw e.getTargetException();
+						Class<?> declaringClass = method.getDeclaringClass();
+						
+						Throwable t = e.getTargetException();
+						StackTraceElement[] ts1 = t.getStackTrace();
+						StackTraceElement[] ts2 = Thread.currentThread().getStackTrace();
+						StackTraceElement[] ts = new StackTraceElement[ts1.length + ts2.length - 1];
+						System.arraycopy(ts1, 0, ts, 0, ts1.length);
+						ts[ts1.length + 0] = new StackTraceElement(".", "........................ RPC ..........................", null, 0);
+						ts[ts1.length + 1] = new StackTraceElement(declaringClass.getName(), method.getName(), null, -1);
+						System.arraycopy(ts2, 3, ts, ts1.length + 2, ts2.length - 3);
+						t.setStackTrace(ts);
+						throw t;
 					}
 				};
 			});
